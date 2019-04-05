@@ -1,0 +1,29 @@
+From e79bf75f49ba362b7d2033adde3fa7dd5f1e9f65 Mon Sep 17 00:00:00 2001
+From: Numan Siddique <nusiddiq@redhat.com>
+Date: Wed, 3 Apr 2019 21:02:59 +0530
+Subject: [PATCH] fedora: Use PROFILE=SYSTEM in SSL_CTX_set_cipher_list
+
+This is fedora only patch to address the fedora crypto policies
+https://docs.fedoraproject.org/en-US/packaging-guidelines/CryptoPolicies/
+
+Signed-off-by: Numan Siddique <nusiddiq@redhat.com>
+---
+ lib/stream-ssl.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/stream-ssl.c b/lib/stream-ssl.c
+index fed71801b..78e54c39e 100644
+--- a/lib/stream-ssl.c
++++ b/lib/stream-ssl.c
+@@ -1014,7 +1014,7 @@ do_ssl_init(void)
+     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+                        NULL);
+     SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_OFF);
+-    SSL_CTX_set_cipher_list(ctx, "HIGH:!aNULL:!MD5");
++    SSL_CTX_set_cipher_list(ctx, "PROFILE=SYSTEM");
+ 
+     return 0;
+ }
+-- 
+2.20.1
+

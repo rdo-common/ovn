@@ -1,0 +1,70 @@
+From 61054c6bdfdaf4e0160f745174da4c202943b949 Mon Sep 17 00:00:00 2001
+From: Han Zhou <hzhou8@ebay.com>
+Date: Fri, 15 Feb 2019 18:49:52 -0800
+Subject: [PATCH 3/4] ovn-nbctl: Daemon mode should retry when IDL connection
+ lost.
+
+When creating IDL, "retry" was set to false. However, in daemon
+mode, reconnecting upon DB server failure should be transparent
+to user. This even impacts HA mode. E.g. in clustered mode, although
+IDL tries to connect to next server, but at the first retry the
+server fail-over may not be completed yet, and it stops retry after
+N (N = number of remotes) times.
+
+This patch makes sure in daemon mode retry is set to true so that
+the daemon will automatically retry forever.
+
+Signed-off-by: Han Zhou <hzhou8@ebay.com>
+Signed-off-by: Ben Pfaff <blp@ovn.org>
+---
+ ovn/utilities/ovn-nbctl.c | 12 ++++++++----
+ tests/ovn-nbctl.at        |  8 ++++++++
+ 2 files changed, 16 insertions(+), 4 deletions(-)
+
+diff --git a/ovn/utilities/ovn-nbctl.c b/ovn/utilities/ovn-nbctl.c
+index 2fa0b3389..cca7dbaa1 100644
+--- a/ovn/utilities/ovn-nbctl.c
++++ b/ovn/utilities/ovn-nbctl.c
+@@ -174,15 +174,19 @@ main(int argc, char *argv[])
+     apply_options_direct(parsed_options, n_parsed_options, &local_options);
+     free(parsed_options);
+ 
+-    /* Initialize IDL. */
+-    idl = the_idl = ovsdb_idl_create(db, &nbrec_idl_class, true, false);
+-    ovsdb_idl_set_leader_only(idl, leader_only);
+-
++    bool daemon_mode = false;
+     if (get_detach()) {
+         if (argc != optind) {
+             ctl_fatal("non-option arguments not supported with --detach "
+                       "(use --help for help)");
+         }
++        daemon_mode = true;
++    }
++    /* Initialize IDL. "retry" is true iff in daemon mode. */
++    idl = the_idl = ovsdb_idl_create(db, &nbrec_idl_class, true, daemon_mode);
++    ovsdb_idl_set_leader_only(idl, leader_only);
++
++    if (daemon_mode) {
+         server_loop(idl, argc, argv);
+     } else {
+         struct ctl_command *commands;
+diff --git a/tests/ovn-nbctl.at b/tests/ovn-nbctl.at
+index f55277cee..26ab01165 100644
+--- a/tests/ovn-nbctl.at
++++ b/tests/ovn-nbctl.at
+@@ -1571,3 +1571,11 @@ $SW1P2
+ AT_CHECK([ovn-nbctl pg-del pg1], [0], [ignore])
+ AT_CHECK([ovn-nbctl list port_group], [0], [])
+ ])
++
++AT_SETUP([ovn-nbctl - daemon retry connection])
++OVN_NBCTL_TEST_START daemon
++AT_CHECK([kill `cat ovsdb-server.pid`])
++AT_CHECK([ovsdb-server --detach --no-chdir --pidfile --log-file --remote=punix:$OVS_RUNDIR/ovnnb_db.sock ovn-nb.db], [0], [], [stderr])
++AT_CHECK([ovn-nbctl show], [0], [ignore])
++OVN_NBCTL_TEST_STOP /Terminated/d
++AT_CLEANUP
+-- 
+2.20.1
+

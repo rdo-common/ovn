@@ -1,0 +1,75 @@
+From f385abded52064364e13a188d1ddfcb02dce4df7 Mon Sep 17 00:00:00 2001
+From: Timothy Redaelli <tredaelli@redhat.com>
+Date: Thu, 28 Feb 2019 18:27:46 +0100
+Subject: [PATCH] rhel: Use PIDFile on forking systemd service files
+
+Currently, PIDFile is not used in systemd service files with
+Type=forking. This means sometimes systemd fails to restart a daemon
+that is killed (with SIGKILL) or that is crashed.
+
+This commit adds PIDFile to all systemd service file with Type=forking
+in order to always have the correct PID to monitor.
+
+Reported-at: https://bugzilla.redhat.com/1653717
+Reported-by: Candido Campos <ccamposr@redhat.com>
+Acked-by: Flavio Leitner <fbl@sysclose.org>
+Signed-off-by: Timothy Redaelli <tredaelli@redhat.com>
+Signed-off-by: Ben Pfaff <blp@ovn.org>
+---
+ rhel/usr_lib_systemd_system_openvswitch-ipsec.service | 1 +
+ rhel/usr_lib_systemd_system_ovn-controller.service    | 1 +
+ rhel/usr_lib_systemd_system_ovs-vswitchd.service.in   | 1 +
+ rhel/usr_lib_systemd_system_ovsdb-server.service      | 1 +
+ 4 files changed, 4 insertions(+)
+
+diff --git a/rhel/usr_lib_systemd_system_openvswitch-ipsec.service b/rhel/usr_lib_systemd_system_openvswitch-ipsec.service
+index 6e309aa57..d8f47af68 100644
+--- a/rhel/usr_lib_systemd_system_openvswitch-ipsec.service
++++ b/rhel/usr_lib_systemd_system_openvswitch-ipsec.service
+@@ -5,6 +5,7 @@ After=openvswitch.service
+ 
+ [Service]
+ Type=forking
++PIDFile=/var/run/openvswitch/ovs-monitor-ipsec.pid
+ ExecStart=/usr/share/openvswitch/scripts/ovs-ctl \
+                     --ike-daemon=libreswan start-ovs-ipsec
+ ExecStop=/usr/share/openvswitch/scripts/ovs-ctl stop-ovs-ipsec
+diff --git a/rhel/usr_lib_systemd_system_ovn-controller.service b/rhel/usr_lib_systemd_system_ovn-controller.service
+index 283e581df..cf65988fe 100644
+--- a/rhel/usr_lib_systemd_system_ovn-controller.service
++++ b/rhel/usr_lib_systemd_system_ovn-controller.service
+@@ -21,6 +21,7 @@ After=openvswitch.service
+ 
+ [Service]
+ Type=forking
++PIDFile=/var/run/openvswitch/ovn-controller.pid
+ Restart=on-failure
+ EnvironmentFile=-/etc/sysconfig/ovn-controller
+ ExecStart=/usr/share/openvswitch/scripts/ovn-ctl --no-monitor \
+diff --git a/rhel/usr_lib_systemd_system_ovs-vswitchd.service.in b/rhel/usr_lib_systemd_system_ovs-vswitchd.service.in
+index 317aa993c..edd76493c 100644
+--- a/rhel/usr_lib_systemd_system_ovs-vswitchd.service.in
++++ b/rhel/usr_lib_systemd_system_ovs-vswitchd.service.in
+@@ -9,6 +9,7 @@ PartOf=openvswitch.service
+ 
+ [Service]
+ Type=forking
++PIDFile=/var/run/openvswitch/ovs-vswitchd.pid
+ Restart=on-failure
+ Environment=XDG_RUNTIME_DIR=/var/run/openvswitch
+ EnvironmentFile=/etc/openvswitch/default.conf
+diff --git a/rhel/usr_lib_systemd_system_ovsdb-server.service b/rhel/usr_lib_systemd_system_ovsdb-server.service
+index 70da1ec95..41ac2dded 100644
+--- a/rhel/usr_lib_systemd_system_ovsdb-server.service
++++ b/rhel/usr_lib_systemd_system_ovsdb-server.service
+@@ -7,6 +7,7 @@ PartOf=openvswitch.service
+ 
+ [Service]
+ Type=forking
++PIDFile=/var/run/openvswitch/ovsdb-server.pid
+ Restart=on-failure
+ EnvironmentFile=/etc/openvswitch/default.conf
+ EnvironmentFile=-/etc/sysconfig/openvswitch
+-- 
+2.20.1
+
