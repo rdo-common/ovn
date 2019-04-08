@@ -399,7 +399,7 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
-* Mon Apr 21 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.0-5
+* Mon Apr 8 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.0-5
 - Support building OVN packages for Centos7/RDO.
 
 * Fri Apr 5 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.0-4
