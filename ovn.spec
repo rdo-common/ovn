@@ -36,7 +36,7 @@ Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
 Version: 2.11.0
-Release: 5%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Release: 6%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
 Obsoletes: openvswitch-ovn-common < 2.11.0-3
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -73,7 +73,7 @@ Patch20: 0001-OVN-Add-port-addresses-to-IPAM-after-all-ports-are-j.patch
 BuildRequires: gcc autoconf automake libtool
 BuildRequires: systemd openssl openssl-devel
 
-%if %{with_python3}
+%if 0%{?with_python3}
 BuildRequires: python3-devel python3-six python3-setuptools
 %else
 BuildRequires: %{_py2}-devel %{_py2}-six %{_py2}-setuptools
@@ -86,18 +86,12 @@ BuildRequires: unbound-devel
 # make check dependencies
 BuildRequires: procps-ng
 
-%if %{with_python3}
+%if 0%{?with_python3}
 BuildRequires: python3-pyOpenSSL
 %else
 BuildRequires: pyOpenSSL
 %endif
 
-%if %{with check_datapath_kernel}
-BuildRequires: nmap-ncat
-# would be useful but not available in RHEL or EPEL
-#BuildRequires: pyftpdlib
-%endif
- 
 %if %{with libcapng}
 BuildRequires: libcap-ng-devel
 %endif
@@ -399,6 +393,9 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Mon Apr 8 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.0-6
+- Fix spec file - %if error for centos builds.
+
 * Mon Apr 8 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.0-5
 - Support building OVN packages for Centos7/RDO.
 
