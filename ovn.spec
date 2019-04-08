@@ -23,11 +23,20 @@
 # OVN resource agent script.
 %global ovnlibdir %{_prefix}/lib
 
+# Use python3 on fedora/rhel8 and python2 on rhel7/centos.
+# The same spec file will be used to build OVN
+# pacakges for CentOS - RDO and it doesn't have
+# python3 yet.
+%if 0%{?rhel} > 7 || 0%{?fedora}
+# Use Python3
+%global with_python3 1
+%endif
+
 Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
 Version: 2.11.0
-Release: 4%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Release: 5%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
 Obsoletes: openvswitch-ovn-common < 2.11.0-3
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -63,7 +72,12 @@ Patch20: 0001-OVN-Add-port-addresses-to-IPAM-after-all-ports-are-j.patch
 
 BuildRequires: gcc autoconf automake libtool
 BuildRequires: systemd openssl openssl-devel
+
+%if %{with_python3}
 BuildRequires: python3-devel python3-six python3-setuptools
+%else
+BuildRequires: %{_py2}-devel %{_py2}-six %{_py2}-setuptools
+%endif
 
 BuildRequires: /usr/bin/sphinx-build
 BuildRequires: desktop-file-utils
@@ -71,7 +85,13 @@ BuildRequires: groff-base graphviz
 BuildRequires: unbound-devel
 # make check dependencies
 BuildRequires: procps-ng
+
+%if %{with_python3}
 BuildRequires: python3-pyOpenSSL
+%else
+BuildRequires: pyOpenSSL
+%endif
+
 %if %{with check_datapath_kernel}
 BuildRequires: nmap-ncat
 # would be useful but not available in RHEL or EPEL
@@ -170,8 +190,12 @@ sed -i.old -e "s/^AC_INIT(openvswitch,.*,/AC_INIT(openvswitch, %{version},/" con
 %endif
         --enable-ssl \
         --with-pkidir=%{_sharedstatedir}/openvswitch/pki \
+%if 0%{?with_python3}
         PYTHON3=%{__python3} \
         PYTHON=%{__python3}
+%else
+        PYTHON=%{__python2}
+%endif
 
 make %{?_smp_mflags}
 
@@ -375,6 +399,8 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Mon Apr 21 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.0-5
+- Support building OVN packages for Centos7/RDO.
 
 * Fri Apr 5 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.0-4
 - Provide new OVN packages splitting from openvswitch for fedora
