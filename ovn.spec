@@ -36,7 +36,7 @@ Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
 Version: 2.11.0
-Release: 6%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Release: 7%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
 Obsoletes: openvswitch-ovn-common < 2.11.0-3
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -76,7 +76,7 @@ BuildRequires: systemd openssl openssl-devel
 %if 0%{?with_python3}
 BuildRequires: python3-devel python3-six python3-setuptools
 %else
-BuildRequires: %{_py2}-devel %{_py2}-six %{_py2}-setuptools
+BuildRequires: python2-devel python2-six python2-setuptools
 %endif
 
 BuildRequires: /usr/bin/sphinx-build
@@ -89,7 +89,7 @@ BuildRequires: procps-ng
 %if 0%{?with_python3}
 BuildRequires: python3-pyOpenSSL
 %else
-BuildRequires: pyOpenSSL
+BuildRequires: python2-pyOpenSSL
 %endif
 
 %if %{with libcapng}
@@ -393,6 +393,9 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Mon Apr 8 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.0-7
+- Fix build error on centos builds.
+
 * Mon Apr 8 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.0-6
 - Fix spec file - %if error for centos builds.
 
