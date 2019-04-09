@@ -36,8 +36,8 @@ Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
 Version: 2.11.0
-Release: 7%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
-Obsoletes: openvswitch-ovn-common < 2.11.0-3
+Release: 8%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Obsoletes: openvswitch-ovn-common < %{?epoch:%{epoch}:}%{version}-%{release}
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -113,7 +113,7 @@ Summary: Open Virtual Network support
 License: ASL 2.0
 Requires: ovn = %{?epoch:%{epoch}:}%{version}-%{release}
 Requires: firewalld-filesystem
-Obsoletes: openvswitch-ovn-central < 2.11.0-3
+Obsoletes: openvswitch-ovn-central < %{?epoch:%{epoch}:}%{version}-%{release}
 Provides: openvswitch-ovn-central = %{?epoch:%{epoch}:}%{version}-%{release}
 
 %description central
@@ -124,7 +124,7 @@ Summary: Open Virtual Network support
 License: ASL 2.0
 Requires: ovn = %{?epoch:%{epoch}:}%{version}-%{release}
 Requires: firewalld-filesystem
-Obsoletes: openvswitch-ovn-host < 2.11.0-3
+Obsoletes: openvswitch-ovn-host < %{?epoch:%{epoch}:}%{version}-%{release}
 Provides: openvswitch-ovn-host = %{?epoch:%{epoch}:}%{version}-%{release}
 
 %description host
@@ -134,7 +134,7 @@ OVN controller running on each host.
 Summary: Open Virtual Network support
 License: ASL 2.0
 Requires: ovn = %{?epoch:%{epoch}:}%{version}-%{release}
-Obsoletes: openvswitch-ovn-vtep < 2.11.0-3
+Obsoletes: openvswitch-ovn-vtep < %{?epoch:%{epoch}:}%{version}-%{release}
 Provides: openvswitch-ovn-vtep = %{?epoch:%{epoch}:}%{version}-%{release}
 
 %description vtep
@@ -145,7 +145,7 @@ OVN vtep controller
 Summary: Open Virtual Network support
 License: ASL 2.0
 Requires: ovn = %{?epoch:%{epoch}:}%{version}-%{release} %{_py}-openvswitch
-Obsoletes: openvswitch-ovn-docker < 2.11.0-3
+Obsoletes: openvswitch-ovn-docker < %{?epoch:%{epoch}:}%{version}-%{release}
 Provides: openvswitch-ovn-docker = %{?epoch:%{epoch}:}%{version}-%{release}
 
 %description docker
@@ -393,6 +393,9 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Tue Apr 9 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.0-8
+- Fix Obsoletes version
+
 * Mon Apr 8 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.0-7
 - Fix build error on centos builds.
 
