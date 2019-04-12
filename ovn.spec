@@ -32,12 +32,19 @@
 %global with_python3 1
 %endif
 
+# openvswitch in RDO has epoch set. So set epoch if built for rhel/centos.
+# Otherwise, the ovn packages build by this spec file,  doesn't obsolete
+# openvswitch-ovn* packages.
+%if 0%{?rhel}
+%global epoch_ovs 1
+%endif
+
 Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
 Version: 2.11.0
-Release: 8%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
-Obsoletes: openvswitch-ovn-common < %{?epoch:%{epoch}:}%{version}-%{release}
+Release: 9%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Obsoletes: openvswitch-ovn-common < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -113,7 +120,7 @@ Summary: Open Virtual Network support
 License: ASL 2.0
 Requires: ovn = %{?epoch:%{epoch}:}%{version}-%{release}
 Requires: firewalld-filesystem
-Obsoletes: openvswitch-ovn-central < %{?epoch:%{epoch}:}%{version}-%{release}
+Obsoletes: openvswitch-ovn-central < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-central = %{?epoch:%{epoch}:}%{version}-%{release}
 
 %description central
@@ -124,7 +131,7 @@ Summary: Open Virtual Network support
 License: ASL 2.0
 Requires: ovn = %{?epoch:%{epoch}:}%{version}-%{release}
 Requires: firewalld-filesystem
-Obsoletes: openvswitch-ovn-host < %{?epoch:%{epoch}:}%{version}-%{release}
+Obsoletes: openvswitch-ovn-host < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-host = %{?epoch:%{epoch}:}%{version}-%{release}
 
 %description host
@@ -134,7 +141,7 @@ OVN controller running on each host.
 Summary: Open Virtual Network support
 License: ASL 2.0
 Requires: ovn = %{?epoch:%{epoch}:}%{version}-%{release}
-Obsoletes: openvswitch-ovn-vtep < %{?epoch:%{epoch}:}%{version}-%{release}
+Obsoletes: openvswitch-ovn-vtep < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-vtep = %{?epoch:%{epoch}:}%{version}-%{release}
 
 %description vtep
@@ -145,7 +152,7 @@ OVN vtep controller
 Summary: Open Virtual Network support
 License: ASL 2.0
 Requires: ovn = %{?epoch:%{epoch}:}%{version}-%{release} %{_py}-openvswitch
-Obsoletes: openvswitch-ovn-docker < %{?epoch:%{epoch}:}%{version}-%{release}
+Obsoletes: openvswitch-ovn-docker < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-docker = %{?epoch:%{epoch}:}%{version}-%{release}
 
 %description docker
@@ -393,6 +400,9 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Tue Apr 9 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.0-9
+- Fix epoch issue for RDO.
+
 * Tue Apr 9 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.0-8
 - Fix Obsoletes version
 
