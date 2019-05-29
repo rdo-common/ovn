@@ -42,8 +42,8 @@
 Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
-Version: 2.11.0
-Release: 9%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Version: 2.11.1
+Release: 0%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
 Obsoletes: openvswitch-ovn-common < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -64,18 +64,6 @@ Source: https://www.openvswitch.org/releases/openvswitch-%{version}.tar.gz
 
 # Address crpto policy for fedora
 Patch1: 0001-fedora-Use-PROFILE-SYSTEM-in-SSL_CTX_set_cipher_list.patch
-
-# Bug 1684477
-Patch2: 0001-rhel-Use-PIDFile-on-forking-systemd-service-files.patch
-
-# Bug: 1684796
-Patch10: 0001-Support-for-multiple-VTEP-in-OVN.patch
-Patch11: 0002-Add-a-simple-test-to-check-port-binding-when-encap-i.patch
-Patch12: 0003-ovn-nbctl-Daemon-mode-should-retry-when-IDL-connecti.patch
-Patch13: 0004-ovn-controller-Provide-the-option-to-set-the-datapat.patch
-
-# Fix s390x IPAM router ports test
-Patch20: 0001-OVN-Add-port-addresses-to-IPAM-after-all-ports-are-j.patch
 
 BuildRequires: gcc autoconf automake libtool
 BuildRequires: systemd openssl openssl-devel
@@ -400,6 +388,9 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Wed May 29 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.1-0
+- Use the latest openvswitch sources with the commit - 4992e00012e7
+
 * Tue Apr 9 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.0-9
 - Fix epoch issue for RDO.
 
