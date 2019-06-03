@@ -43,7 +43,7 @@ Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
 Version: 2.11.1
-Release: 0%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Release: 1%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
 Obsoletes: openvswitch-ovn-common < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -64,6 +64,7 @@ Source: https://www.openvswitch.org/releases/openvswitch-%{version}.tar.gz
 
 # Address crpto policy for fedora
 Patch1: 0001-fedora-Use-PROFILE-SYSTEM-in-SSL_CTX_set_cipher_list.patch
+Patch2: 0001-downstream-only-Change-the-version-from-2.11.90-to-2.patch
 
 BuildRequires: gcc autoconf automake libtool
 BuildRequires: systemd openssl openssl-devel
@@ -388,6 +389,9 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Mon Jun 3 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.1-1
+- Fix the version information in configure.ac
+
 * Wed May 29 2019 Numan Siddique <nusiddiq@redhat.com> - 2.11.1-0
 - Use the latest openvswitch sources with the commit - 4992e00012e7
 
