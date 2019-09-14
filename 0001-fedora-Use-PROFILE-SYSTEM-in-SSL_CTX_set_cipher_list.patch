@@ -11,10 +11,10 @@ Signed-off-by: Numan Siddique <nusiddiq@redhat.com>
  lib/stream-ssl.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/lib/stream-ssl.c b/lib/stream-ssl.c
+diff --git a/openvswitch-2.12.0/lib/stream-ssl.c b/openvswitch-2.12.0/lib/stream-ssl.c
 index fed71801b..78e54c39e 100644
---- a/lib/stream-ssl.c
-+++ b/lib/stream-ssl.c
+--- a/openvswitch-2.12.0/lib/stream-ssl.c
++++ b/openvswitch-2.12.0/lib/stream-ssl.c
 @@ -1014,7 +1014,7 @@ do_ssl_init(void)
      SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
                         NULL);

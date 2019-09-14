@@ -42,8 +42,8 @@
 Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
-Version: 2.11.1
-Release: 2%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Version: 2.12.0
+Release: 0%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
 Obsoletes: openvswitch-ovn-common < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -54,17 +54,21 @@ License: ASL 2.0 and LGPLv2+ and SISSL
 %if 0%{?commit0:1}
 Source: https://github.com/openvswitch/ovs/archive/%{commit0}.tar.gz#/openvswitch-%{shortcommit0}.tar.gz
 %else
-Source: https://www.openvswitch.org/releases/openvswitch-%{version}.tar.gz
+Source: https://www.openvswitch.org/releases/ovn-%{version}.tar.gz
 %endif
 
+%define ovsver %{version}
+%define ovsdir openvswitch-%{ovsver}
+
+Source10: https://openvswitch.org/releases/openvswitch-%{ovsver}.tar.gz
 
 # ovn-patches
 
 # OVN (including OVS if required) backports (0 - 399)
 
+# OpenvSwitch backports (400-) if required.
 # Address crpto policy for fedora
-Patch1: 0001-fedora-Use-PROFILE-SYSTEM-in-SSL_CTX_set_cipher_list.patch
-Patch2: 0001-downstream-only-Change-the-version-from-2.11.90-to-2.patch
+Patch400: 0001-fedora-Use-PROFILE-SYSTEM-in-SSL_CTX_set_cipher_list.patch
 
 BuildRequires: gcc autoconf automake libtool
 BuildRequires: systemd openssl openssl-devel
@@ -152,7 +156,7 @@ Docker network plugins for OVN.
 %if 0%{?commit0:1}
 %autosetup -v -n ovs-%{commit0} -p 1
 %else
-%autosetup -n openvswitch-%{version} -p 1
+%autosetup -n ovn-%{version} -a 10 -p 1
 %endif
 
 %build
@@ -162,17 +166,32 @@ sed -i.old -e "s/^AC_INIT(openvswitch,.*,/AC_INIT(openvswitch, %{version},/" con
 %endif
 ./boot.sh
 
-# OVN source code is present inside the openvswitch/ovn folder
-# and it uses common code of openvswitch, mainly the header
-# files present in openvswitch/lib. When openvswitch is
-# compiled, it also generates OVN binaries. So we compile
-# the normal way and then copy the OVN related files
-# to the relevant OVN (sub)packages.
-# We compile statically so that all the openvswitch
-# code which OVN uses can be independently consumed without
-# the need to update openvswitch packages and be independent
-# of OVS.
+# OVN source code is now separate.
+# Build openvswitch first.
+# Build openvswitch first
+cd openvswitch-%{ovsver}
+./boot.sh
 %configure \
+%if %{with libcapng}
+        --enable-libcapng \
+%else
+        --disable-libcapng \
+%endif
+        --enable-ssl \
+        --with-pkidir=%{_sharedstatedir}/openvswitch/pki \
+%if 0%{?with_python3}
+        PYTHON3=%{__python3} \
+        PYTHON=%{__python3}
+%else
+        PYTHON=%{__python2}
+%endif
+
+make %{?_smp_mflags}
+cd -
+
+# Build OVN.
+%configure \
+        --with-ovs-source=$PWD/openvswitch-%{ovsver} \
 %if %{with libcapng}
         --enable-libcapng \
 %else
@@ -192,15 +211,17 @@ make %{?_smp_mflags}
 %install
 %make_install
 
+install -p -D -m 0644 \
+        rhel/usr_share_ovn_scripts_systemd_sysconfig.template \
+        $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/ovn
+
 for service in ovn-controller ovn-controller-vtep ovn-northd; do
         install -p -D -m 0644 \
                         rhel/usr_lib_systemd_system_${service}.service \
                         $RPM_BUILD_ROOT%{_unitdir}/${service}.service
 done
 
-rm -rf $RPM_BUILD_ROOT/%{_datadir}/openvswitch/python/
-
-install -d -m 0755 $RPM_BUILD_ROOT/%{_sharedstatedir}/openvswitch
+install -d -m 0755 $RPM_BUILD_ROOT/%{_sharedstatedir}/ovn
 
 install -d $RPM_BUILD_ROOT%{ovnlibdir}/firewalld/services/
 install -p -m 0644 rhel/usr_lib_firewalld_services_ovn-central-firewall-service.xml \
@@ -209,8 +230,11 @@ install -p -m 0644 rhel/usr_lib_firewalld_services_ovn-host-firewall-service.xml
         $RPM_BUILD_ROOT%{ovnlibdir}/firewalld/services/ovn-host-firewall-service.xml
 
 install -d -m 0755 $RPM_BUILD_ROOT%{ovnlibdir}/ocf/resource.d/ovn
-ln -s %{_datadir}/openvswitch/scripts/ovndb-servers.ocf \
+ln -s %{_datadir}/ovn/scripts/ovndb-servers.ocf \
       $RPM_BUILD_ROOT%{ovnlibdir}/ocf/resource.d/ovn/ovndb-servers
+
+install -p -D -m 0644 rhel/etc_logrotate.d_ovn \
+        $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/ovn
 
 # remove OVS unpackages files
 rm -f $RPM_BUILD_ROOT%{_bindir}/ovs*
@@ -222,18 +246,12 @@ rm -f $RPM_BUILD_ROOT%{_mandir}/man5/vtep*
 rm -f $RPM_BUILD_ROOT%{_mandir}/man7/ovs*
 rm -f $RPM_BUILD_ROOT%{_mandir}/man8/ovs*
 rm -f $RPM_BUILD_ROOT%{_mandir}/man8/vtep*
-rm -f $RPM_BUILD_ROOT%{_datadir}/openvswitch/ovs*
-rm -f $RPM_BUILD_ROOT%{_datadir}/openvswitch/vswitch.ovsschema
-rm -f $RPM_BUILD_ROOT%{_datadir}/openvswitch/vtep.ovsschema
-rm -f $RPM_BUILD_ROOT%{_datadir}/openvswitch/scripts/ovs*
-rm -rf $RPM_BUILD_ROOT%{_datadir}/openvswitch/bugtool-plugins
-rm -f $RPM_BUILD_ROOT%{_includedir}/openvswitch/*
-rm -f $RPM_BUILD_ROOT%{_includedir}/openflow/*
+rm -rf $RPM_BUILD_ROOT%{_datadir}/ovn/python
+rm -f $RPM_BUILD_ROOT%{_datadir}/ovn/scripts/ovs*
+rm -rf $RPM_BUILD_ROOT%{_datadir}/ovn/bugtool-plugins
 rm -f $RPM_BUILD_ROOT%{_libdir}/*.a
 rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
 rm -f $RPM_BUILD_ROOT%{_libdir}/pkgconfig/*.pc
-rm -f $RPM_BUILD_ROOT%{_includedir}/openvswitch/*
-rm -f $RPM_BUILD_ROOT%{_includedir}/openflow/*
 rm -f $RPM_BUILD_ROOT%{_includedir}/ovn/*
 rm -f $RPM_BUILD_ROOT%{_sysconfdir}/bash_completion.d/ovs-appctl-bashcomp.bash
 rm -f $RPM_BUILD_ROOT%{_sysconfdir}/bash_completion.d/ovs-vsctl-bashcomp.bash
@@ -306,6 +324,14 @@ fi
 %preun vtep
 %systemd_preun ovn-controller-vtep.service
 
+%post
+%if %{with libcapng}
+if [ $1 -eq 1 ]; then
+    sed -i 's:^#OVN_USER_ID=:OVN_USER_ID=:' %{_sysconfdir}/sysconfig/ovn
+    sed -i 's:\(.*su\).*:\1 ovn ovn:' %{_sysconfdir}/logrotate.d/ovn
+fi
+%endif
+
 %post central
 %systemd_post ovn-northd.service
 
@@ -347,11 +373,17 @@ fi
 %{_bindir}/ovn-sbctl
 %{_bindir}/ovn-trace
 %{_bindir}/ovn-detrace
-%dir %{_datadir}/openvswitch/
-%dir %{_datadir}/openvswitch/scripts/
-%{_datadir}/openvswitch/scripts/ovn-ctl
-%{_datadir}/openvswitch/scripts/ovndb-servers.ocf
+%{_bindir}/ovn-appctl
+%dir %{_datadir}/ovn/
+%dir %{_datadir}/ovn/scripts/
+%{_datadir}/ovn/scripts/ovn-ctl
+%{_datadir}/ovn/scripts/ovn-lib
+%{_datadir}/ovn/scripts/ovndb-servers.ocf
+%{_datadir}/ovn/scripts/ovn-bugtool-nbctl-show
+%{_datadir}/ovn/scripts/ovn-bugtool-sbctl-lflow-list
+%{_datadir}/ovn/scripts/ovn-bugtool-sbctl-show
 %{_mandir}/man8/ovn-ctl.8*
+%{_mandir}/man8/ovn-appctl.8*
 %{_mandir}/man8/ovn-nbctl.8*
 %{_mandir}/man8/ovn-trace.8*
 %{_mandir}/man1/ovn-detrace.1*
@@ -361,6 +393,8 @@ fi
 %{_mandir}/man5/ovn-sb.5*
 %dir %{ovnlibdir}/ocf/resource.d/ovn/
 %{ovnlibdir}/ocf/resource.d/ovn/ovndb-servers
+%config(noreplace) %{_sysconfdir}/logrotate.d/ovn
+%config(noreplace) %{_sysconfdir}/sysconfig/ovn
 %license LICENSE
 
 %if %{with ovn_docker}
@@ -372,8 +406,8 @@ fi
 %files central
 %{_bindir}/ovn-northd
 %{_mandir}/man8/ovn-northd.8*
-%{_datadir}/openvswitch/ovn-nb.ovsschema
-%{_datadir}/openvswitch/ovn-sb.ovsschema
+%{_datadir}/ovn/ovn-nb.ovsschema
+%{_datadir}/ovn/ovn-sb.ovsschema
 %{_unitdir}/ovn-northd.service
 %{ovnlibdir}/firewalld/services/ovn-central-firewall-service.xml
 
@@ -389,6 +423,9 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Sat Sep 14 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-0
+- 2.12.0 from new OVN repo
+
 * Thu Jul 25 2019 Fedora Release Engineering <releng@fedoraproject.org> - 2.11.1-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
 
