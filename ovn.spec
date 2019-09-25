@@ -70,6 +70,9 @@ Source10: https://openvswitch.org/releases/openvswitch-%{ovsver}.tar.gz
 # Address crpto policy for fedora
 Patch400: 0001-fedora-Use-PROFILE-SYSTEM-in-SSL_CTX_set_cipher_list.patch
 
+# Fixes the python3 error seen during compilation.
+Patch410: 0001-ovsdb-idlc.in-fix-dict-change-during-iteration.patch
+
 BuildRequires: gcc autoconf automake libtool
 BuildRequires: systemd openssl openssl-devel
 
