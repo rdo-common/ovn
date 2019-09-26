@@ -422,6 +422,9 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Thu Sep 26 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-1
+- Apply fedora only patch only on fedora builds.
+
 * Sat Sep 14 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-0
 - 2.12.0 from new OVN repo
 
