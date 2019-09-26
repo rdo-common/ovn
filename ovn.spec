@@ -43,7 +43,7 @@ Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
 Version: 2.12.0
-Release: 0%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Release: 1%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
 Obsoletes: openvswitch-ovn-common < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -68,7 +68,9 @@ Source10: https://openvswitch.org/releases/openvswitch-%{ovsver}.tar.gz
 
 # OpenvSwitch backports (400-) if required.
 # Address crpto policy for fedora
+%if 0%{?fedora}
 Patch400: 0001-fedora-Use-PROFILE-SYSTEM-in-SSL_CTX_set_cipher_list.patch
+%endif
 
 # Fixes the python3 error seen during compilation.
 Patch410: 0001-ovsdb-idlc.in-fix-dict-change-during-iteration.patch
