@@ -43,7 +43,7 @@ Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
 Version: 2.12.0
-Release: 1%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Release: 2%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
 Obsoletes: openvswitch-ovn-common < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -74,6 +74,9 @@ Patch400: 0001-fedora-Use-PROFILE-SYSTEM-in-SSL_CTX_set_cipher_list.patch
 
 # Fixes the python3 error seen during compilation.
 Patch410: 0001-ovsdb-idlc.in-fix-dict-change-during-iteration.patch
+
+# Fix the OVN test failures.
+Patch420: 0001-ovsdb-data-Don-t-put-strings-with-digits-in-quotes.patch
 
 BuildRequires: gcc autoconf automake libtool
 BuildRequires: systemd openssl openssl-devel
@@ -381,6 +384,9 @@ fi
 %{_datadir}/ovn/scripts/ovn-ctl
 %{_datadir}/ovn/scripts/ovn-lib
 %{_datadir}/ovn/scripts/ovndb-servers.ocf
+%{_datadir}/ovn/scripts/ovn-bugtool-nbctl-show
+%{_datadir}/ovn/scripts/ovn-bugtool-sbctl-lflow-list
+%{_datadir}/ovn/scripts/ovn-bugtool-sbctl-show
 %{_mandir}/man8/ovn-ctl.8*
 %{_mandir}/man8/ovn-appctl.8*
 %{_mandir}/man8/ovn-nbctl.8*
@@ -422,6 +428,9 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Tue Oct 08 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-2
+- Use the official openvswitch 2.12.0 tar file.
+
 * Thu Sep 26 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-1
 - Apply fedora only patch only on fedora builds.
 

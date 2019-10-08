@@ -1,0 +1,333 @@
+From 29004db273985088cdb60097bdfd4a6bc6a966d1 Mon Sep 17 00:00:00 2001
+From: Ilya Maximets <i.maximets@samsung.com>
+Date: Thu, 25 Jul 2019 19:09:22 +0300
+Subject: [PATCH] ovsdb-data: Don't put strings with digits in quotes.
+
+No need to use quotes for strings like "br0".
+
+Keeping UUIDs always in quotes to avoid different treatment of those
+that starts with digits and those that starts with letters.
+
+Signed-off-by: Ilya Maximets <i.maximets@samsung.com>
+Acked-by: Ben Pfaff <blp@ovn.org>
+---
+ lib/ovsdb-data.c             |  7 ++++++-
+ tests/ovn-controller-vtep.at |  8 ++++----
+ tests/ovn-nbctl.at           |  6 +++---
+ tests/ovn-sbctl.at           | 20 ++++++++++----------
+ tests/ovs-vsctl.at           | 32 ++++++++++++++++----------------
+ tests/ovsdb-server.at        |  6 +++---
+ tests/vtep-ctl.at            |  4 ++--
+ 7 files changed, 44 insertions(+), 39 deletions(-)
+
+diff --git a/openvswitch-2.12.0/lib/ovsdb-data.c b/openvswitch-2.12.0/lib/ovsdb-data.c
+index b0fb20d31..4828624f6 100644
+--- a/openvswitch-2.12.0/lib/ovsdb-data.c
++++ b/openvswitch-2.12.0/lib/ovsdb-data.c
+@@ -674,6 +674,7 @@ string_needs_quotes(const char *s)
+ {
+     const char *p = s;
+     unsigned char c;
++    struct uuid uuid;
+ 
+     c = *p++;
+     if (!isalpha(c) && c != '_') {
+@@ -681,7 +682,7 @@ string_needs_quotes(const char *s)
+     }
+ 
+     while ((c = *p++) != '\0') {
+-        if (!isalpha(c) && c != '_' && c != '-' && c != '.') {
++        if (!isalpha(c) && !isdigit(c) && c != '_' && c != '-' && c != '.') {
+             return true;
+         }
+     }
+@@ -690,6 +691,10 @@ string_needs_quotes(const char *s)
+         return true;
+     }
+ 
++    if (uuid_from_string(&uuid, s)) {
++        return true;
++    }
++
+     return false;
+ }
+ 
+diff --git a/openvswitch-2.12.0/tests/ovn-controller-vtep.at b/openvswitch-2.12.0/tests/ovn-controller-vtep.at
+index 676cbe391..a3fe8cb88 100644
+--- a/openvswitch-2.12.0/tests/ovn-controller-vtep.at
++++ b/openvswitch-2.12.0/tests/ovn-controller-vtep.at
+@@ -136,28 +136,28 @@ AT_CHECK([ovn-sbctl --columns=ip list Encap | cut -d ':' -f2 | tr -d ' '], [0],
+ AT_CHECK([vtep-ctl add-ls lswitch0 -- bind-ls br-vtep p0 100 lswitch0 -- bind-ls br-vtep p0 200 lswitch0 -- bind-ls br-vtep p1 300 lswitch0])
+ OVS_WAIT_UNTIL([test -n "`ovn-sbctl list Chassis | grep -- lswitch0`"])
+ AT_CHECK([ovn-sbctl --columns=vtep_logical_switches list Chassis | cut -d ':' -f2 | tr -d ' ' ], [0], [dnl
+-[["lswitch0"]]
++[[lswitch0]]
+ ])
+ 
+ # adds another logical switch and new vlan_bindings.
+ AT_CHECK([vtep-ctl add-ls lswitch1 -- bind-ls br-vtep p0 300 lswitch1])
+ OVS_WAIT_UNTIL([test -n "`ovn-sbctl list Chassis | grep -- lswitch1`"])
+ AT_CHECK([ovn-sbctl --columns=vtep_logical_switches list Chassis | cut -d ':' -f2 | tr -d ' '], [0], [dnl
+-[["lswitch0","lswitch1"]]
++[[lswitch0,lswitch1]]
+ ])
+ 
+ # unbinds one port from lswitch0, nothing should change.
+ AT_CHECK([vtep-ctl unbind-ls br-vtep p0 200])
+ OVS_WAIT_UNTIL([test -z "`vtep-ctl --columns=vlan_bindings list physical_port p0 | grep -- '200='`"])
+ AT_CHECK([ovn-sbctl --columns=vtep_logical_switches list Chassis | cut -d ':' -f2 | tr -d ' ' ], [0], [dnl
+-[["lswitch0","lswitch1"]]
++[[lswitch0,lswitch1]]
+ ])
+ 
+ # unbinds all ports from lswitch0.
+ AT_CHECK([vtep-ctl unbind-ls br-vtep p0 100 -- unbind-ls br-vtep p1 300])
+ OVS_WAIT_UNTIL([test -z "`ovn-sbctl list Chassis | grep -- br-vtep_lswitch0`"])
+ AT_CHECK([ovn-sbctl --columns=vtep_logical_switches list Chassis | cut -d ':' -f2 | tr -d ' ' ], [0], [dnl
+-[["lswitch1"]]
++[[lswitch1]]
+ ])
+ 
+ # unbinds all ports from lswitch1.
+diff --git a/openvswitch-2.12.0/tests/ovn-nbctl.at b/openvswitch-2.12.0/tests/ovn-nbctl.at
+index 18c5c1d42..d99d3af9b 100644
+--- a/openvswitch-2.12.0/tests/ovn-nbctl.at
++++ b/openvswitch-2.12.0/tests/ovn-nbctl.at
+@@ -1594,7 +1594,7 @@ OVN_NBCTL_TEST([ovn_nbctl_port_groups], [port groups], [
+ dnl Check that port group can be looked up by name
+ AT_CHECK([ovn-nbctl create Port_Group name=pg0], [0], [ignore])
+ AT_CHECK([ovn-nbctl get Port_Group pg0 name], [0], [dnl
+-"pg0"
++pg0
+ ])])
+ 
+ OVN_NBCTL_TEST([ovn_nbctl_extra_newlines], [extra newlines], [
+@@ -1603,10 +1603,10 @@ dnl daemon mode. All we have to do is ensure that each time we list database
+ dnl information, there is not an extra newline at the beginning of the output.
+ AT_CHECK([ovn-nbctl ls-add sw1], [0], [ignore])
+ AT_CHECK([ovn-nbctl --columns=name list logical_switch sw1], [0], [dnl
+-name                : "sw1"
++name                : sw1
+ ])
+ AT_CHECK([ovn-nbctl --columns=name list logical_switch sw1], [0], [dnl
+-name                : "sw1"
++name                : sw1
+ ])])
+ 
+ OVN_NBCTL_TEST([ovn_nbctl_table_formatting], [table formatting], [
+diff --git a/openvswitch-2.12.0/tests/ovn-sbctl.at b/openvswitch-2.12.0/tests/ovn-sbctl.at
+index 1266b56d0..650e357da 100644
+--- a/openvswitch-2.12.0/tests/ovn-sbctl.at
++++ b/openvswitch-2.12.0/tests/ovn-sbctl.at
+@@ -79,11 +79,11 @@ AT_CHECK([ovn-nbctl --wait=sb sync])
+ AT_CHECK([ovn-sbctl lsp-bind vif0 ch0])
+ 
+ AT_CHECK([ovn-sbctl show], [0], [dnl
+-Chassis "ch0"
++Chassis ch0
+     Encap stt
+         ip: "1.2.3.5"
+         options: {csum="true"}
+-    Port_Binding "vif0"
++    Port_Binding vif0
+ ])
+ 
+ # adds another 'vif1'
+@@ -92,12 +92,12 @@ AT_CHECK([ovn-nbctl lsp-set-addresses vif1 f0:ab:cd:ef:01:03])
+ AT_CHECK([ovn-sbctl lsp-bind vif1 ch0])
+ 
+ AT_CHECK([ovn-sbctl show | sed 's/vif[[0-9]]/vif/'], [0], [dnl
+-Chassis "ch0"
++Chassis ch0
+     Encap stt
+         ip: "1.2.3.5"
+         options: {csum="true"}
+-    Port_Binding "vif"
+-    Port_Binding "vif"
++    Port_Binding vif
++    Port_Binding vif
+ ])
+ 
+ # deletes 'vif1'
+@@ -105,16 +105,16 @@ AT_CHECK([ovn-nbctl lsp-del vif1])
+ AT_CHECK([ovn-nbctl --wait=sb sync])
+ 
+ AT_CHECK([ovn-sbctl show], [0], [dnl
+-Chassis "ch0"
++Chassis ch0
+     Encap stt
+         ip: "1.2.3.5"
+         options: {csum="true"}
+-    Port_Binding "vif0"
++    Port_Binding vif0
+ ])
+ 
+ uuid=$(ovn-sbctl --columns=_uuid list Chassis ch0 | cut -d ':' -f2 | tr -d ' ')
+ AT_CHECK_UNQUOTED([ovn-sbctl --columns=logical_port,mac,chassis list Port_Binding], [0], [dnl
+-logical_port        : "vif0"
++logical_port        : vif0
+ mac                 : [["f0:ab:cd:ef:01:02"]]
+ chassis             : ${uuid}
+ ])
+@@ -126,10 +126,10 @@ AT_CHECK([ovn-nbctl lsp-set-options vtep0 vtep_physical_switch=p0 vtep_logical_s
+ 
+ AT_CHECK([ovn-sbctl --timeout=10 wait-until Port_Binding vtep0 options!={}])
+ AT_CHECK([ovn-sbctl --columns=logical_port,mac,type,options list Port_Binding vtep0], [0], [dnl
+-logical_port        : "vtep0"
++logical_port        : vtep0
+ mac                 : [[]]
+ type                : vtep
+-options             : {vtep_logical_switch="l0", vtep_physical_switch="p0"}
++options             : {vtep_logical_switch=l0, vtep_physical_switch=p0}
+ ])
+ 
+ OVN_SBCTL_TEST_STOP
+diff --git a/openvswitch-2.12.0/tests/ovs-vsctl.at b/openvswitch-2.12.0/tests/ovs-vsctl.at
+index 77604c58a..46fa3c5b1 100644
+--- a/openvswitch-2.12.0/tests/ovs-vsctl.at
++++ b/openvswitch-2.12.0/tests/ovs-vsctl.at
+@@ -453,9 +453,9 @@ value0
+ key0=othervalue
+ 
+ 
+-{"key1"="value1"}
+-{"key2"="value2", "key3"="value3"}
+-{"key4"="value4"}
++{key1=value1}
++{key2=value2, key3=value3}
++{key4=value4}
+ ])
+ AT_CHECK([RUN_OVS_VSCTL_TOGETHER(
+   [br-get-external-id a],
+@@ -463,9 +463,9 @@ AT_CHECK([RUN_OVS_VSCTL_TOGETHER(
+   [get interface a2 external-ids],
+   [get interface a3 external-ids])], [0],
+ [
+-{"key1"="value1"}
+-{"key2"="value2", "key3"="value3"}
+-{"key4"="value4"}
++{key1=value1}
++{key2=value2, key3=value3}
++{key4=value4}
+ ])
+ CHECK_BRIDGES([a, a, 0])
+ CHECK_PORTS([a], [a1], [bond0])
+@@ -731,7 +731,7 @@ flow_tables         : {}
+ ipfix               : []
+ mcast_snooping_enable: false
+ mirrors             : []
+-name                : "br0"
++name                : br0
+ netflow             : []
+ other_config        : {}
+ ports               : []
+@@ -747,14 +747,14 @@ AT_CHECK(
+   [RUN_OVS_VSCTL([--columns=fail_mode,name,datapath_type list bridge])],
+   [0],
+   [[fail_mode           : []
+-name                : "br0"
++name                : br0
+ datapath_type       : ""
+ ]], [ignore])
+ AT_CHECK(
+   [RUN_OVS_VSCTL([--columns=fail_mode,name,datapath_type find bridge])],
+   [0],
+   [[fail_mode           : []
+-name                : "br0"
++name                : br0
+ datapath_type       : ""
+ ]], [ignore])
+ AT_CHECK([
+@@ -766,8 +766,8 @@ AT_CHECK(
+   [RUN_OVS_VSCTL([--columns=name find bridge datapath_type!=foo])], [0], [stdout],
+   [ignore])
+ AT_CHECK([sed -n '/./p' stdout | sort], [0],
+-  [[name                : "br0"
+-name                : "br2"
++  [[name                : br0
++name                : br2
+ ]])
+ AT_CHECK(
+   [RUN_OVS_VSCTL(
+@@ -1142,9 +1142,9 @@ AT_CHECK(
+ AT_CHECK(
+   [sed -n -e '/uuid/p' -e '/name/p' -e '/mirrors/p' -e '/select/p' -e '/output/p' < stdout | uuidfilt], [0], [dnl
+ [_uuid               : <0>
+-name                : "eth0"
++name                : eth0
+ _uuid               : <1>
+-name                : "eth1"
++name                : eth1
+ _uuid               : <2>
+ name                : mymirror
+ output_port         : <1>
+@@ -1155,7 +1155,7 @@ select_src_port     : [<0>]
+ select_vlan         : []
+ _uuid               : <3>
+ mirrors             : [<2>]
+-name                : "br0"
++name                : br0
+ ]])
+ OVS_VSCTL_CLEANUP
+ AT_CLEANUP
+@@ -1214,7 +1214,7 @@ flow_tables         : {}
+ ipfix               : []
+ mcast_snooping_enable: false
+ mirrors             : []
+-name                : "br0"
++name                : br0
+ netflow             : []
+ other_config        : {}
+ ports               : []
+@@ -1357,7 +1357,7 @@ OVS_VSCTL_SETUP
+ dnl First check that the database commands can refer to row by database UUID.
+ AT_CHECK([RUN_OVS_VSCTL([add-br br0])])
+ uuid=`[]RUN_OVS_VSCTL(get port br0 _uuid)`
+-AT_CHECK([RUN_OVS_VSCTL([get port $uuid name])], [0], ["br0"
++AT_CHECK([RUN_OVS_VSCTL([get port $uuid name])], [0], [br0
+ ])
+ 
+ dnl Next check that, if a database row is given a name that has the same form
+diff --git a/openvswitch-2.12.0/tests/ovsdb-server.at b/openvswitch-2.12.0/tests/ovsdb-server.at
+index 81f03d28b..09629410a 100644
+--- a/openvswitch-2.12.0/tests/ovsdb-server.at
++++ b/openvswitch-2.12.0/tests/ovsdb-server.at
+@@ -1203,8 +1203,8 @@ for i in `seq 1 $n_iterations`; do
+     trigger_big_update $i
+ done
+ AT_CHECK([ovs-appctl -t ovsdb-client ovsdb-client/unblock])
+-OVS_WAIT_UNTIL([grep "\"xyzzy$counter\"" ovsdb-client.out])
+-OVS_WAIT_UNTIL([grep "\"xyzzy$counter\"" ovsdb-client-nonblock.out])
++OVS_WAIT_UNTIL([grep "xyzzy$counter" ovsdb-client.out])
++OVS_WAIT_UNTIL([grep "xyzzy$counter" ovsdb-client-nonblock.out])
+ OVS_APP_EXIT_AND_WAIT([ovsdb-client])
+ AT_CHECK([kill `cat nonblock.pid`])
+ 
+@@ -1221,7 +1221,7 @@ echo "logged_updates=$logged_updates (expected less than $logged_nonblock_update
+ AT_CHECK([test $logged_nonblock_updates -le $n_updates])
+ AT_CHECK([test $logged_updates -lt $logged_nonblock_updates])
+ AT_CHECK_UNQUOTED([ovs-vsctl get open_vswitch . system_version], [0],
+-  ["xyzzy$counter"
++  [xyzzy$counter
+ ])
+ OVS_APP_EXIT_AND_WAIT([ovsdb-server])
+ AT_CLEANUP
+diff --git a/openvswitch-2.12.0/tests/vtep-ctl.at b/openvswitch-2.12.0/tests/vtep-ctl.at
+index e44eb33ee..f2b007f9a 100644
+--- a/openvswitch-2.12.0/tests/vtep-ctl.at
++++ b/openvswitch-2.12.0/tests/vtep-ctl.at
+@@ -939,9 +939,9 @@ AT_CHECK([vtep-ctl --timeout=5 -vreconnect:emer --db=unix:socket show | tail -n+
+     Physical_Switch a
+         management_ips: [["4.3.2.1"]]
+         tunnel_ips: [["1.2.3.4"]]
+-        Physical_Port "a1"
++        Physical_Port a1
+             vlan_bindings:
+-                100="ls1"
++                100=ls1
+ ], [], [VTEP_CTL_CLEANUP])
+ 
+ VTEP_CTL_CLEANUP
+-- 
+2.21.0
+
