@@ -264,6 +264,8 @@ rm -f $RPM_BUILD_ROOT%{_includedir}/ovn/*
 rm -f $RPM_BUILD_ROOT%{_sysconfdir}/bash_completion.d/ovs-appctl-bashcomp.bash
 rm -f $RPM_BUILD_ROOT%{_sysconfdir}/bash_completion.d/ovs-vsctl-bashcomp.bash
 rm -rf $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/openvswitch
+rm -f $RPM_BUILD_ROOT%{_datadir}/ovn/scripts/ovn-bugtool*
+
 
 %if %{without ovn_docker}
 rm -f $RPM_BUILD_ROOT/%{_bindir}/ovn-docker-overlay-driver \
@@ -384,9 +386,6 @@ fi
 %{_datadir}/ovn/scripts/ovn-ctl
 %{_datadir}/ovn/scripts/ovn-lib
 %{_datadir}/ovn/scripts/ovndb-servers.ocf
-%{_datadir}/ovn/scripts/ovn-bugtool-nbctl-show
-%{_datadir}/ovn/scripts/ovn-bugtool-sbctl-lflow-list
-%{_datadir}/ovn/scripts/ovn-bugtool-sbctl-show
 %{_mandir}/man8/ovn-ctl.8*
 %{_mandir}/man8/ovn-appctl.8*
 %{_mandir}/man8/ovn-nbctl.8*
