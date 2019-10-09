@@ -43,7 +43,7 @@ Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
 Version: 2.12.0
-Release: 2%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Release: 3%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
 Obsoletes: openvswitch-ovn-common < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -427,6 +427,9 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Wed Oct 08 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-3
+- Sync the ovn tar ball to the latest master with the commit - 1a3e6dfb5e2fd5bbb625f637792f91a02767ff3b.
+
 * Tue Oct 08 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-2
 - Use the official openvswitch 2.12.0 tar file.
 
