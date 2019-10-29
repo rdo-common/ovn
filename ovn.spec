@@ -43,7 +43,7 @@ Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
 Version: 2.12.0
-Release: 3%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Release: 4%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
 Obsoletes: openvswitch-ovn-common < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -57,7 +57,16 @@ Source: https://github.com/openvswitch/ovs/archive/%{commit0}.tar.gz#/openvswitc
 Source: https://www.openvswitch.org/releases/ovn-%{version}.tar.gz
 %endif
 
-%define ovsver %{version}
+# The OVN commit used for 2.12.0-4 is 0a51bb04f8d6194b2c706558d434b09a89196e26.
+# Update the above commit whenever the sources is updated.
+
+# Set the ovsversion to 2.12.90 which is the latest master. We always compile
+# OVN with the latest OVS master. Otherwise we will see compilation issues.
+# OVS is used only for compilation. The actual OVS binaries - ovs-vswitchd, ovsdb-server etc
+# comes from openvswitch package.
+# The ovs commit used for OVN 2.12.0-4 is acc5df0e3cb036524d49891fdb9ba89b609dd26a.
+# The ovs tarball is generated manually by running - "make dist" in the ovs repository.
+%define ovsver 2.12.90
 %define ovsdir openvswitch-%{ovsver}
 
 Source10: https://openvswitch.org/releases/openvswitch-%{ovsver}.tar.gz
@@ -71,12 +80,6 @@ Source10: https://openvswitch.org/releases/openvswitch-%{ovsver}.tar.gz
 %if 0%{?fedora}
 Patch400: 0001-fedora-Use-PROFILE-SYSTEM-in-SSL_CTX_set_cipher_list.patch
 %endif
-
-# Fixes the python3 error seen during compilation.
-Patch410: 0001-ovsdb-idlc.in-fix-dict-change-during-iteration.patch
-
-# Fix the OVN test failures.
-Patch420: 0001-ovsdb-data-Don-t-put-strings-with-digits-in-quotes.patch
 
 BuildRequires: gcc autoconf automake libtool
 BuildRequires: systemd openssl openssl-devel
@@ -427,6 +430,9 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Tue Oct 29 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-4
+- Sync the ovn tar ball to the latest master with the commit - 0a51bb04f8d6194b2c706558d434b09a89196e26.
+
 * Wed Oct 08 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-3
 - Sync the ovn tar ball to the latest master with the commit - 1a3e6dfb5e2fd5bbb625f637792f91a02767ff3b.
 
