@@ -43,7 +43,7 @@ Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
 Version: 2.12.0
-Release: 8%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Release: 9%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
 Obsoletes: openvswitch-ovn-common < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -64,7 +64,7 @@ Source: https://www.openvswitch.org/releases/ovn-%{version}.tar.gz
 # OVN with the latest OVS master. Otherwise we will see compilation issues.
 # OVS is used only for compilation. The actual OVS binaries - ovs-vswitchd, ovsdb-server etc
 # comes from openvswitch package.
-# The ovs commit used is 36e5d97f9b09262ccc584ccb45fb06482b0cfc46.
+# The ovs commit used is 91157afbd83aefb0c9f558d2841fece388b3b0cb.
 # The ovs tarball is generated manually by running - "make dist" in the ovs repository.
 %define ovsver 2.12.90
 %define ovsdir openvswitch-%{ovsver}
@@ -100,7 +100,7 @@ BuildRequires: procps-ng
 %if 0%{?with_python3}
 BuildRequires: python3-pyOpenSSL
 %else
-BuildRequires: python2-pyOpenSSL
+BuildRequires: pyOpenSSL
 %endif
 
 %if %{with libcapng}
@@ -430,6 +430,10 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Mon Nov 25 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-9
+- Use the ovs commit 91157afbd83aefb0c9f558d2841fece388b3b0cb as ovn
+  build for centos 7 was still failing.
+
 * Mon Nov 25 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-8
 - Reverse the previous commit.
 - Fix the compilation error seen in Centos7 by using
