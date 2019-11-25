@@ -43,7 +43,7 @@ Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
 Version: 2.12.0
-Release: 5%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Release: 6%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
 Obsoletes: openvswitch-ovn-common < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -430,13 +430,16 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
-* Tue Oct 08 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-5
+* Mon Nov 25 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-6
+- Fix the changelog date errors.
+
+* Wed Nov 06 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-5
 - Fix the logrotate issue - (#1769200).
 
 * Tue Oct 29 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-4
 - Sync the ovn tar ball to the latest master with the commit - 0a51bb04f8d6194b2c706558d434b09a89196e26.
 
-* Wed Oct 08 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-3
+* Wed Oct 09 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-3
 - Sync the ovn tar ball to the latest master with the commit - 1a3e6dfb5e2fd5bbb625f637792f91a02767ff3b.
 
 * Tue Oct 08 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-2
