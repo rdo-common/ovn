@@ -23,14 +23,8 @@
 # OVN resource agent script.
 %global ovnlibdir %{_prefix}/lib
 
-# Use python3 on fedora/rhel8 and python2 on rhel7/centos.
-# The same spec file will be used to build OVN
-# pacakges for CentOS - RDO and it doesn't have
-# python3 yet.
-%if 0%{?rhel} > 7 || 0%{?fedora}
-# Use Python3
+# Use python3.
 %global with_python3 1
-%endif
 
 # openvswitch in RDO has epoch set. So set epoch if built for rhel/centos.
 # Otherwise, the ovn packages build by this spec file,  doesn't obsolete
@@ -43,7 +37,7 @@ Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
 Version: 2.12.0
-Release: 6%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Release: 7%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
 Obsoletes: openvswitch-ovn-common < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -430,6 +424,9 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Mon Nov 25 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-7
+- Build with python 3 support as ovs requires python 3.
+
 * Mon Nov 25 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-6
 - Fix the changelog date errors.
 
