@@ -23,8 +23,14 @@
 # OVN resource agent script.
 %global ovnlibdir %{_prefix}/lib
 
-# Use python3.
+# Use python3 on fedora/rhel8 and python2 on rhel7/centos.
+# The same spec file will be used to build OVN
+# pacakges for CentOS - RDO and it doesn't have
+# python3 yet.
+%if 0%{?rhel} > 7 || 0%{?fedora}
+# Use Python3
 %global with_python3 1
+%endif
 
 # openvswitch in RDO has epoch set. So set epoch if built for rhel/centos.
 # Otherwise, the ovn packages build by this spec file,  doesn't obsolete
@@ -37,7 +43,7 @@ Name: ovn
 Summary: Open Virtual Network support
 URL: http://www.openvswitch.org/
 Version: 2.12.0
-Release: 7%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
+Release: 8%{?commit0:.%{date}git%{shortcommit0}}%{?dist}
 Obsoletes: openvswitch-ovn-common < %{?epoch_ovs:%{epoch_ovs}:}2.11.0-8
 Provides: openvswitch-ovn-common = %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -58,7 +64,7 @@ Source: https://www.openvswitch.org/releases/ovn-%{version}.tar.gz
 # OVN with the latest OVS master. Otherwise we will see compilation issues.
 # OVS is used only for compilation. The actual OVS binaries - ovs-vswitchd, ovsdb-server etc
 # comes from openvswitch package.
-# The ovs commit used for OVN 2.12.0-4 is acc5df0e3cb036524d49891fdb9ba89b609dd26a.
+# The ovs commit used is 36e5d97f9b09262ccc584ccb45fb06482b0cfc46.
 # The ovs tarball is generated manually by running - "make dist" in the ovs repository.
 %define ovsver 2.12.90
 %define ovsdir openvswitch-%{ovsver}
@@ -424,6 +430,13 @@ fi
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Mon Nov 25 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-8
+- Reverse the previous commit.
+- Fix the compilation error seen in Centos7 by using
+  ovs commit - 36e5d97f9b09262ccc584ccb45fb06482b0cfc46.
+  The commit 1ca0323e7c29d("Require Python 3 and remove support for Python 2.") removed
+  Python 2 support because of which compilation is failing in Centos 7.
+
 * Mon Nov 25 2019 Numan Siddique <nusiddiq@redhat.com> - 2.12.0-7
 - Build with python 3 support as ovs requires python 3.
 
