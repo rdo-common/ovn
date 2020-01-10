@@ -107,7 +107,7 @@ BuildRequires: pyOpenSSL
 BuildRequires: libcap-ng-devel
 %endif
 
-Requires: openssl hostname iproute module-init-tools openvswitch
+Requires: openssl hostname iproute module-init-tools openvswitch libibverbs
 %{?systemd_requires}
 
 # to skip running checks, pass --without check
