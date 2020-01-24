@@ -111,7 +111,8 @@ Requires: openssl hostname iproute module-init-tools openvswitch libibverbs
 %{?systemd_requires}
 
 # to skip running checks, pass --without check
-%bcond_without check
+# (amoralej) - skip tests in centos8 - https://bugs.centos.org/view.php?id=16969
+%bcond_with check
 
 %description
 OVN, the Open Virtual Network, is a system to support virtual network
